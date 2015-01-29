@@ -64,7 +64,7 @@ ABGR|DDSReader.ABGR|DDS_READER_ABGR|for OpenGL Texture(GL_RGBA), iOS UIImage
 **C**
 ```c
 	unsigned char *buffer = ...;
-	int *pixels = ddsRead(buffer, DDS_READER_ABGR);
+	int *pixels = ddsRead(buffer, DDS_READER_ABGR, 0);
 	int width = ddsGetWidth(buffer);
 	int height = ddsGetHeight(buffer);
 ```
@@ -77,40 +77,66 @@ Sample code to create Java OpenGL texture.
 **Java**
 ```java
 	public int createDDSTexture() {
-	    int texture = 0;
-	    
-	    try {
-	        FileInputStream fis = new FileInputStream(path);
-	        byte [] buffer = new byte[fis.available()];
-	        fis.read(buffer);
-	        fis.close();
+		int texture = 0;
+	
+		try {
+			FileInputStream fis = new FileInputStream(path);
+			byte [] buffer = new byte[fis.available()];
+			fis.read(buffer);
+			fis.close();
 
-	        int [] pixels = DDSReader.read(buffer, DDSReader.ABGR, 0);
-	        int width = DDSReader.getWidth(buffer);
-	        int height = DDSReader.getHeight(buffer);
+			int [] pixels = DDSReader.read(buffer, DDSReader.ABGR, 0);
+			int width = DDSReader.getWidth(buffer);
+			int height = DDSReader.getHeight(buffer);
+			int mipmap = DDSReader.getMipmap(buffer);
 
-	        int [] textures = new int[1];
-	        gl.glGenTextures(1, textures, 0);
+			int [] textures = new int[1];
+			gl.glGenTextures(1, textures, 0);
 
-	        gl.glEnable(GL.TEXTURE_2D);
-	        gl.glBindTexture(GL.TEXTURE_2D, textures[0]);
-	        gl.glPixelStorei(GL.UNPACK_ALIGNMENT, 4);
+			gl.glEnable(GL.TEXTURE_2D);
+			gl.glBindTexture(GL.TEXTURE_2D, textures[0]);
+			gl.glPixelStorei(GL.UNPACK_ALIGNMENT, 4);
 
-	        IntBuffer texBuffer = IntBuffer.wrap(pixels);
-	        gl.glTexImage2D(GL.TEXTURE_2D, 0, GL.RGBA, width, height, 0, GL.RGBA, GL.UNSIGNED_BYTE, texBuffer);
+			if(mipmap > 0) {
+				// mipmaps
+				for(int i=0; (width > 0) || (height > 0); i++) {
+					if(width <= 0) width = 1;
+					if(height <= 0) height = 1;
+					int [] pixels = DDSReader.read(buffer, DDSReader.ABGR, i);
+	
+					IntBuffer texBuffer = IntBuffer.wrap(pixels);
+					gl.glTexImage2D(TEXTURE_2D, i, RGBA, width, height, 0, RGBA, UNSIGNED_BYTE, texBuffer);
+	
+					width /= 2;
+					height /= 2;
+				}
+	
+				gl.glTexParameteri(TEXTURE_2D, TEXTURE_WRAP_S, REPEAT);
+				gl.glTexParameteri(TEXTURE_2D, TEXTURE_WRAP_T, REPEAT);
+				gl.glTexParameteri(TEXTURE_2D, TEXTURE_MAG_FILTER, LINEAR);
+				gl.glTexParameteri(TEXTURE_2D, TEXTURE_MIN_FILTER, LINEAR_MIPMAP_NEAREST);
+			}
+			else {
+				// no mipmaps
+				int [] pixels = DDSReader.read(buffer, DDSReader.ABGR, 0);
+	
+				IntBuffer texBuffer = IntBuffer.wrap(pixels);
+				gl.glTexImage2D(TEXTURE_2D, 0, RGBA, width, height, 0, RGBA, UNSIGNED_BYTE, texBuffer);
+	
+				gl.glTexParameteri(TEXTURE_2D, TEXTURE_WRAP_S, REPEAT);
+				gl.glTexParameteri(TEXTURE_2D, TEXTURE_WRAP_T, REPEAT);
+				gl.glTexParameteri(TEXTURE_2D, TEXTURE_MAG_FILTER, LINEAR);
+				gl.glTexParameteri(TEXTURE_2D, TEXTURE_MIN_FILTER, LINEAR);
 
-	        gl.glTexParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_S, GL.REPEAT);
-	        gl.glTexParameteri(GL.TEXTURE_2D, GL.TEXTURE_WRAP_T, GL.REPEAT);
-	        gl.glTexParameteri(GL.TEXTURE_2D, GL.TEXTURE_MAG_FILTER, GL.LINEAR);
-	        gl.glTexParameteri(GL.TEXTURE_2D, GL.TEXTURE_MIN_FILTER, GL.LINEAR);
+			}
 	        
-	        texture = textures[0];
-	    }
-	    catch(Exception e) {
-	        e.printStackTrace();
-	    }
-	    
-	    return texture;
+			texture = textures[0];
+		}
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+	
+		return texture;
 	}
 ```
 
@@ -149,41 +175,65 @@ Sample code to create Android OpenGL texture.
 	import static javax.microedition.khronos.opengles.GL10;
 
 	public int createDDSTexture(GL10 gl, String path) {
-	    int texture = 0;
-	    try {
-	        
-	        InputStream is = getContext().getAssets().open(path);
-	        byte [] buffer = new byte[is.available()];
-	        is.read(buffer);
-	        is.close();
-	        
-	        int [] pixels = DDSReader.read(buffer, DDSReader.ABGR, 0);
-	        int width = DDSReader.getWidth(buffer);
-	        int height = DDSReader.getHeight(buffer);
-	        
-	        int [] textures = new int[1];
-	        gl.glGenTextures(1, textures, 0);
-	        
-	        gl.glEnable(GL_TEXTURE_2D);
-	        gl.glBindTexture(GL_TEXTURE_2D, textures[0]);
-	        gl.glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-
-	        IntBuffer texBuffer = IntBuffer.wrap(pixels);
-	        gl.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texBuffer);
-	        
-	        gl.glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	        gl.glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	        gl.glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	        gl.glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	        
-	        texture = textures[0];
-	        
-	    }
-	    catch (IOException e) {
-	        e.printStackTrace();
-	    }
-	    
-	    return texture;
+		int texture = 0;
+		try {
+			
+			InputStream is = getContext().getAssets().open(path);
+			byte [] buffer = new byte[is.available()];
+			is.read(buffer);
+			is.close();
+			
+			int width = DDSReader.getWidth(buffer);
+			int height = DDSReader.getHeight(buffer);
+			int mipmap = DDSReader.getMipmap(buffer);
+			
+			int [] textures = new int[1];
+			gl.glGenTextures(1, textures, 0);
+			
+			gl.glEnable(GL_TEXTURE_2D);
+			gl.glBindTexture(GL_TEXTURE_2D, textures[0]);
+			gl.glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+			
+			if(mipmap > 0) {
+				// mipmap
+				for(int i=0; (width > 0) || (height > 0); i++) {
+					if(width <= 0) width = 1;
+					if(height <= 0) height = 1;
+					int [] pixels = DDSReader.read(buffer, DDSReader.ABGR, i);
+					
+					IntBuffer texBuffer = IntBuffer.wrap(pixels);
+					gl.glTexImage2D(GL_TEXTURE_2D, i, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texBuffer);
+					
+					width /= 2;
+					height /= 2;
+				}
+				
+				gl.glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+				gl.glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+				gl.glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				gl.glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+			}
+			else {
+				// no mipmap
+				int [] pixels = DDSReader.read(buffer, DDSReader.ABGR, 0);
+				
+				IntBuffer texBuffer = IntBuffer.wrap(pixels);
+				gl.glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, texBuffer);
+				
+				gl.glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+				gl.glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+				gl.glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				gl.glTexParameterx(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			}
+			
+			texture = textures[0];
+			
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return texture;
 	}
 ```
 
@@ -225,43 +275,69 @@ Sample code to create iOS OpenGL texture.
 
 **Objective-C**
 ```objc
-	- (GLuint)createDDSTexture:(NSString *)path {
-	    
-	    GLuint texture = 0;
-	    
-	    FILE *file = fopen([path UTF8String], "rb");
-	    if(file) {
-	        fseek(file, 0, SEEK_END);
-	        int size = ftell(file);
-	        fseek(file, 0, SEEK_SET);
-	        
-	        unsigned char *buffer = (unsigned char *)ddsMalloc(size);
-	        fread(buffer, 1, size, file);
-	        fclose(file);
-	        
-	        int width = ddsGetWidth(buffer);
-	        int height = ddsGetHeight(buffer);
-	        int *pixels = ddsRead(buffer, DDS_READER_ABGR);
-	        
-	        ddsFree(buffer);
-	        
-	        glGenTextures(1, &texture);
-	        glEnable(GL_TEXTURE_2D);
-	        glBindTexture(GL_TEXTURE_2D, texture);
-	        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-	        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-	        
-	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	        
-	        ddsFree(pixels);
-	    }
-	    
-	    return texture;
+- (GLuint)createDDSTexture:(NSString *)path {
+    
+    GLuint texture = 0;
+    
+    FILE *file = fopen([path UTF8String], "rb");
+    if(file) {
+        fseek(file, 0, SEEK_END);
+        int size = ftell(file);
+        fseek(file, 0, SEEK_SET);
+        
+        unsigned char *buffer = (unsigned char *)ddsMalloc(size);
+        fread(buffer, 1, size, file);
+        fclose(file);
+        
+        int width = ddsGetWidth(buffer);
+        int height = ddsGetHeight(buffer);
+        int mipmap = ddsGetMipmap(buffer);
+        
+        glGenTextures(1, &texture);
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+        
+        if(mipmap > 0) {
+            // mipmap
+            for(int i=0; (width > 0) || (height > 0); i++) {
+                if(width <= 0) width = 1;
+                if(height <= 0) height = 1;
+                int *pixels = ddsRead(buffer, DDS_READER_ABGR, i);
+                
+                glTexImage2D(GL_TEXTURE_2D, i, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 
-	}
+                width /= 2;
+                height /= 2;
+
+                ddsFree(pixels);
+            }
+            
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+        }
+        else {
+            // no mipmap
+            int *pixels = ddsRead(buffer, DDS_READER_ABGR, 0);
+            
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+            
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            
+            ddsFree(pixels);
+        }
+        
+        ddsFree(buffer);
+    }
+    
+    return texture;
+    
+}
 ```
 
 For more details, please refer to the sample project.
@@ -273,44 +349,44 @@ Sample code to create iOS UIImage.
 
 **Objective-C**
 ```objc
-	- (UIImage *)createDDSImage:(NSString *)path {
+- (UIImage *)createDDSImage:(NSString *)path {
 	    
-	    FILE *file = fopen([path UTF8String], "rb");
-	    if(file) {
-	        fseek(file, 0, SEEK_END);
-	        int size = ftell(file);
-	        fseek(file, 0, SEEK_SET);
+    FILE *file = fopen([path UTF8String], "rb");
+    if(file) {
+        fseek(file, 0, SEEK_END);
+        int size = ftell(file);
+        fseek(file, 0, SEEK_SET);
+        
+        unsigned char *buffer = (unsigned char *)ddsMalloc(size);
+        fread(buffer, 1, size, file);
+        fclose(file);
+        
+        int width = ddsGetWidth(buffer);
+        int height = ddsGetHeight(buffer);
+        int *pixels = ddsRead(buffer, DDS_READER_ABGR, 0);
+        
+        ddsFree(buffer);
+        
+        CGColorSpaceRef colorSpaceRef = CGColorSpaceCreateDeviceRGB();
+        CGBitmapInfo bitmapInfo = (CGBitmapInfo)kCGImageAlphaLast;
+        CGDataProviderRef providerRef = CGDataProviderCreateWithData(NULL, pixels, 4*width*height, releaseDataCallback);
 	        
-	        unsigned char *buffer = (unsigned char *)ddsMalloc(size);
-	        fread(buffer, 1, size, file);
-	        fclose(file);
+        CGImageRef imageRef = CGImageCreate(width, height, 8, 32, 4*width, colorSpaceRef, bitmapInfo, providerRef, NULL, 0, kCGRenderingIntentDefault);
 	        
-	        int width = ddsGetWidth(buffer);
-	        int height = ddsGetHeight(buffer);
-	        int *pixels = ddsRead(buffer, DDS_READER_ABGR);
+        UIImage *image = [[UIImage alloc] initWithCGImage:imageRef];
 	        
-	        ddsFree(buffer);
+        CGColorSpaceRelease(colorSpaceRef);
 	        
-	        CGColorSpaceRef colorSpaceRef = CGColorSpaceCreateDeviceRGB();
-	        CGBitmapInfo bitmapInfo = (CGBitmapInfo)kCGImageAlphaLast;
-	        CGDataProviderRef providerRef = CGDataProviderCreateWithData(NULL, pixels, 4*width*height, releaseDataCallback);
-	        
-	        CGImageRef imageRef = CGImageCreate(width, height, 8, 32, 4*width, colorSpaceRef, bitmapInfo, providerRef, NULL, 0, kCGRenderingIntentDefault);
-	        
-	        UIImage *image = [[UIImage alloc] initWithCGImage:imageRef];
-	        
-	        CGColorSpaceRelease(colorSpaceRef);
-	        
-	        return image;
-	    }
+        return image;
+    }
 	    
-	    return nil;
+    return nil;
 	    
-	}
+}
 
-	static void releaseDataCallback(void *info, const void *data, size_t size) {
-		ddsFree((void *)data);
-	}
+static void releaseDataCallback(void *info, const void *data, size_t size) {
+	ddsFree((void *)data);
+}
 ```
 For more details, please refer to the sample project.
 
