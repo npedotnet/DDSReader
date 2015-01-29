@@ -1,8 +1,7 @@
 # DDSReader
 DDS image reader for Java and C.
 
-TODO
-insert image here.
+![alt text](http://3dtech.jp/wiki/index.php?plugin=attach&refer=DDSReader&openfile=DDSReader.png "DDSReader")
 
 ## License
 
