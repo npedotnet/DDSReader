@@ -3,6 +3,11 @@ DDS image reader for Java and C.
 
 ![alt text](http://3dtech.jp/wiki/index.php?plugin=attach&refer=DDSReader&openfile=DDSReader.png "DDSReader")
 
+![alt text](http://3dtech.jp/wiki/index.php?plugin=attach&refer=DDSReader&openfile=ddsimagedemo.png "DDSWebCanvas")
+
+Online Demo page is here!
+http://npe-net.appspot.com/npesdk/gwt/ddsimagedemo/index.html
+
 ## License
 
 Released under the MIT license.
@@ -391,6 +396,87 @@ static void releaseDataCallback(void *info, const void *data, size_t size) {
 For more details, please refer to the sample project.
 
 https://github.com/npedotnet/DDSReader/tree/master/samples/DDSImageViewer_iOS
+
+#### 4.7. GWT Web Application
+
+Sample code to create DDS HTML5 Canvas with GWT.
+
+**Java**
+```java
+import com.google.gwt.canvas.client.Canvas;
+import com.google.gwt.canvas.dom.client.CanvasPixelArray;
+import com.google.gwt.canvas.dom.client.Context2d;
+import com.google.gwt.canvas.dom.client.ImageData;
+import com.google.gwt.typedarrays.client.Uint8ArrayNative;
+import com.google.gwt.typedarrays.shared.ArrayBuffer;
+import com.google.gwt.xhr.client.ReadyStateChangeHandler;
+import com.google.gwt.xhr.client.XMLHttpRequest;
+import com.google.gwt.xhr.client.XMLHttpRequest.ResponseType;
+
+private Canvas createImageCanvas(int [] pixels, int width, int height) {
+	
+	Canvas canvas = Canvas.createIfSupported();
+	canvas.setCoordinateSpaceWidth(width);
+	canvas.setCoordinateSpaceHeight(height);
+	
+	Context2d context = canvas.getContext2d();
+	ImageData data = context.createImageData(width, height);
+
+	CanvasPixelArray array = data.getData();
+	for(int i=0; i<width*height; i++) { // ABGR
+		array.set(4*i+0, pixels[i] & 0xFF);
+		array.set(4*i+1, (pixels[i] >> 8) & 0xFF);
+		array.set(4*i+2, (pixels[i] >> 16) & 0xFF);
+		array.set(4*i+3, (pixels[i] >> 24) & 0xFF);
+	}
+	context.putImageData(data, 0, 0);
+	
+	return canvas;
+	
+}
+
+private void addDDSCanvas(String url) {
+	XMLHttpRequest request = XMLHttpRequest.create();
+	request.open("GET", url);
+	request.setResponseType(ResponseType.ArrayBuffer);
+	request.setOnReadyStateChange(new ReadyStateChangeHandler() {
+		@Override
+		public void onReadyStateChange(XMLHttpRequest xhr) {
+			if(xhr.getReadyState() == XMLHttpRequest.DONE) {
+				if(xhr.getStatus() >= 400) {
+					// error
+					System.out.println("Error");
+				}
+				else {
+					try {
+						ArrayBuffer arrayBuffer = xhr.getResponseArrayBuffer();
+						Uint8ArrayNative u8array = Uint8ArrayNative.create(arrayBuffer);
+						byte [] buffer = new byte[u8array.length()];
+						for(int i=0; i<buffer.length; i++) {
+							buffer[i] = (byte)u8array.get(i);
+						}
+						int pixels [] = DDSReader.read(buffer, DDSReader.ABGR, 0);
+						int width = DDSReader.getWidth(buffer);
+						int height = DDSReader.getHeight(buffer);
+						
+						Canvas canvas = createImageCanvas(pixels, width, height);
+						
+						panel.add(canvas);
+					}
+					catch(Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+	});
+	request.send();
+}
+```
+
+For more details, please refer to the sample project.
+
+https://github.com/npedotnet/DDSReader/tree/master/samples/DDSWebViewer_GWT
 
 ### 5. Free allocated memory (C language Only)
 
