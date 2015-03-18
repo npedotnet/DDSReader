@@ -5,8 +5,13 @@ DDS image reader for Java and C.
 
 ![alt text](http://3dtech.jp/wiki/index.php?plugin=attach&refer=DDSReader&openfile=ddsimagedemo.png "DDSWebCanvas")
 
-Online Demo page is here!
-http://npe-net.appspot.com/npesdk/gwt/ddsimagedemo/index.html
+Online DDS Canvas Demo page is http://npe-net.appspot.com/npesdk/gwt/ddsimagedemo/index.html
+
+<a href="http://3dtech.jp/wiki/index.php?plugin=attach&refer=DDSReader&openfile=ddswebgldemo.png">
+<img width=50% height=50% src="http://3dtech.jp/wiki/index.php?plugin=attach&refer=DDSReader&openfile=ddswebgldemo.png">
+</a>
+
+Online DDS WebGL Texture Demo page is http://npe-net.appspot.com/npesdk/gwt/ddswebgldemo/index.html
 
 ## License
 
@@ -477,6 +482,33 @@ private void addDDSCanvas(String url) {
 For more details, please refer to the sample project.
 
 https://github.com/npedotnet/DDSReader/tree/master/samples/DDSWebViewer_GWT
+
+#### 4.8 GWT WebGL(GwtGL) Application
+
+Sample code to create DDS WebGL texture with GWT.
+
+```java
+import com.google.gwt.canvas.client.Canvas;
+import com.googlecode.gwtgl.binding.WebGLRenderingContext;
+import com.googlecode.gwtgl.binding.WebGLTexture;
+
+import static com.googlecode.gwtgl.binding.WebGLRenderingContext.*;
+
+WegGLRenderingContext gl = ...;
+
+// See 4.7. GWT Web Application
+Canvas canvas = createImageCanvas(pixels, width, height);
+
+WebGLTexture texture = gl.createTexture();
+
+gl.enable(TEXTURE_2D);
+gl.bindTexture(TEXTURE_2D, texture);
+gl.texImage2D(TEXTURE_2D, 0, RGBA, RGBA, UNSIGNED_BYTE, canvas.getElement());
+```
+
+For more details, please refer to the sample project.
+
+https://github.com/npedotnet/DDSReader/tree/master/samples/DDSWebGLViewer_GWT
 
 ### 5. Free allocated memory (C language Only)
 
