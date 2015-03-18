@@ -3,15 +3,15 @@ DDS image reader for Java and C.
 
 ![alt text](http://3dtech.jp/wiki/index.php?plugin=attach&refer=DDSReader&openfile=DDSReader.png "DDSReader")
 
+Online DDS Canvas Demo page is http://npe-net.appspot.com/npesdk/gwt/ddsimagedemo/index.html
+
 ![alt text](http://3dtech.jp/wiki/index.php?plugin=attach&refer=DDSReader&openfile=ddsimagedemo.png "DDSWebCanvas")
 
-Online DDS Canvas Demo page is http://npe-net.appspot.com/npesdk/gwt/ddsimagedemo/index.html
+Online DDS WebGL Texture Demo page is http://npe-net.appspot.com/npesdk/gwt/ddswebgldemo/index.html
 
 <a href="http://3dtech.jp/wiki/index.php?plugin=attach&refer=DDSReader&openfile=ddswebgldemo.png">
 <img width=50% height=50% src="http://3dtech.jp/wiki/index.php?plugin=attach&refer=DDSReader&openfile=ddswebgldemo.png">
 </a>
-
-Online DDS WebGL Texture Demo page is http://npe-net.appspot.com/npesdk/gwt/ddswebgldemo/index.html
 
 ## License
 
